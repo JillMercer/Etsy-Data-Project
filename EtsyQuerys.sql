@@ -57,13 +57,21 @@ Having [Ship State] = 'FL'
 Order by TotalItems Desc
 
 --Most Popular Item Each Month
-Select Datename(Month,[Sale Date]) as Month, Year([Sale Date]) as Year, Sum(Quantity) as TotalItems, Sum([Item Total]) as TotalPaid, [Item Name]
+With Sales (Month, Year, TotalItems,TotalPaid, [Item Name], Rank)
+as
+(
+Select Datename(Month,[Sale Date]) as Month, Year([Sale Date]) as Year, Sum(Quantity) as TotalItems, Sum([Item Total]) as TotalPaid, [Item Name], Rank() OVER (Partition BY Datename(Month,[Sale Date]),Year([Sale Date]) Order by Sum([Item Total]) Desc) as Rank
 From [dbo].[TotalEtsyOrders]
 Group by Datename(Month,[Sale Date]), Year([Sale Date]),[Item Name]
-order by Datename(Month,[Sale Date]),Year([Sale Date]), Sum(Quantity) Desc
+)
+
+Select *
+From Sales
+Where Rank = 1
+Order by TotalItems Desc
 
 --Average Order Value per Month
-Select Datename(Month,[Sale Date]) as Month,  Year([Sale Date]) as Year, Avg([Item Total]) as AvgOrderTotal
+Select Datename(Month,[Sale Date]) as Month,  Year([Sale Date]) as Year, Round(Avg([Item Total]),2) as AvgOrderTotal
 From [dbo].[TotalEtsyOrders]
 Group by Datename(Month,[Sale Date]),  Year([Sale Date])
 
